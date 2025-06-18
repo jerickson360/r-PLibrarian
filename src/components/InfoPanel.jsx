@@ -1,7 +1,7 @@
 import React from 'react';
-import { PanelRightOpen, PanelRightClose, Info } from 'lucide-react';
+import { PanelRightOpen, PanelRightClose, Info, Folder, File as FileIcon } from 'lucide-react';
 
-function InfoPanel({ isOpen, setIsOpen }) {
+function InfoPanel({ isOpen, setIsOpen, file }) {
   return (
     <>
       <div 
@@ -19,9 +19,30 @@ function InfoPanel({ isOpen, setIsOpen }) {
                 <Info size={18} className="mr-2"/>
                 Information
             </h2>
-            <div className="flex-grow bg-gray-900 border-2 border-dashed border-gray-700 rounded-lg flex items-center justify-center">
-                <p className="text-gray-600 text-center p-4">Select a file to see its metadata.</p>
-            </div>
+            {file ? (
+                <div className="flex-grow space-y-3">
+                    <div className="flex items-center text-lg">
+                        {file.is_directory ? (
+                            <Folder size={20} className="mr-3 text-sky-400 flex-shrink-0"/>
+                        ) : (
+                            <FileIcon size={20} className="mr-3 text-gray-400 flex-shrink-0"/>
+                        )}
+                        <span className="font-bold truncate">{file.name}</span>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-400">Path</p>
+                        <p className="text-sm font-mono bg-gray-900 p-2 rounded break-words">{file.path}</p>
+                    </div>
+                     <div>
+                        <p className="text-sm text-gray-400">Type</p>
+                        <p>{file.is_directory ? 'Folder' : 'File'}</p>
+                    </div>
+                </div>
+            ) : (
+                 <div className="flex-grow bg-gray-900 border-2 border-dashed border-gray-700 rounded-lg flex items-center justify-center">
+                    <p className="text-gray-600 text-center p-4">Select an item to see its metadata.</p>
+                </div>
+            )}
         </div>
       </aside>
     </>

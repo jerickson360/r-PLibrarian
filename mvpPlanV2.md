@@ -1,139 +1,174 @@
-3dPrintLibrarian - MVP Development Plan (v2)
+# 3dPrintLibrarian – MVP Development Plan (v2)
+
 This document outlines the development phases for the Minimum Viable Product (MVP), incorporating initial UI/UX enhancements.
 
-Phase 1: Project Setup & Core UI Shell
-Goal: A runnable Tauri application with a basic window, dark-mode styling, and placeholder UI components, including a floating info panel and a debug console.
+---
+
+## Phase 1: Project Setup & Core UI Shell
+
+**Goal:**  
+A runnable Tauri application with a basic window, dark-mode styling, and placeholder UI components (floating info panel, debug console).
+
+### Environment Setup
 
-Environment Setup:
+- Install **Rust**, **Node.js**, and all platform-specific dependencies required by Tauri.
+- Scaffold a new Tauri project using the **React (Vite)** template.
+
+### Project Structure
+
+- Organize the `src-tauri` directory into logical Rust modules:
+  - `db`
+  - `commands`
+  - `state`
+  - `fs_utils`
+- Set up the React frontend with a basic component structure:
+  - `Layout`
+  - `Sidebar`
+  - `MainContent`
+  - `InfoPanel`
+  - `MenuBar`
 
-Install Rust, Node.js, and any platform-specific dependencies required by Tauri.
+### Initial UI Layout & Enhancements
 
-Scaffold a new Tauri project with the React (Vite) template.
+- **Dark Mode:**  
+  Configure Tailwind CSS to use a dark grey theme by default (`dark` class on the root element).
+- **Main Layout:**  
+  Implement the primary layout (Sidebar, Main Content).
+- **Floating Info Panel:**  
+  - Separate, floating component, absolutely positioned over main content.
+  - Controlled by a state (e.g., `isPanelOpen`).
+  - Toggle handle/tab for open/closed state.
+- **Debug Console Window:**  
+  - Create a Tauri command in Rust:  
+    ```rust
+    open_console_window
+    ```
+    Creates and shows a new, separate window labeled "Debug Console".
+  - Add a "Console" button to the menu bar to trigger this command.
+  - Set up a Tauri event channel (e.g., `log_message`) for backend/frontend logging.
 
-Project Structure:
+---
 
-Organize the src-tauri directory into logical Rust modules (e.g., db, commands, state, fs_utils).
+## Phase 2: Library Management & Filesystem Browsing
 
-Set up the React frontend with a basic component structure (e.g., Layout, Sidebar, MainContent, InfoPanel, MenuBar).
+**Goal:**  
+Allow the user to select a directory as a "library" and display its contents.
 
-Initial UI Layout & Enhancements:
+### Tauri Commands for Filesystem
 
-Dark Mode: Configure Tailwind CSS to use a dark grey theme by default. The root element will have the dark class.
+- **Open Folder Dialog:**  
+  Rust command to open the native "Open Folder" dialog.
+- **List Directory Contents:**  
+  Rust command that takes a path and returns a list of files and folders, including:
+    - name
+    - path
+    - is_dir
+    - modified_date
 
-Main Layout: Implement the primary layout (Sidebar, Main Content).
+### Frontend Integration
 
-Floating Info Panel:
+- Add "Open Library" button to the UI (invokes Open Folder command).
+- Store selected library path in React state.
+- On library open:
+  - Call command to list contents.
+  - Display results in the MainContent area (simple list).
 
-The Info Panel will be a separate, floating component positioned absolutely over the main content area.
+### Database Setup (rusqlite)
 
-It will have a state (e.g., isPanelOpen) to control its visibility.
+- On opening a library, create/connect to a `.3dpl.db` file in the library root.
+- Define initial database schema:
+  - **files** table:  
+    `id`, `path`, `name`, `file_type`, `size`, `modified_date`, `rating`
+  - **tags** table:  
+    `id`, `name`, `color`
+  - **file_tags** join table:  
+    `file_id`, `tag_id`
 
-A visible "handle" or tab will allow the user to toggle the panel's open/closed state.
+---
 
-Debug Console Window:
+## Phase 3: File Tagging & Metadata
 
-Create a Tauri command in Rust (open_console_window) that creates and shows a new, separate window labeled "Debug Console".
+**Goal:**  
+Implement core tagging functionality and display metadata in the Info Panel.
 
-Add a "Console" button to the main window's menu bar to trigger this command.
+### Tagging Commands (Rust)
 
-Set up a Tauri event channel (e.g., log_message) that the Rust backend and frontend can use to send messages to the console window for display.
+- `add_tag(file_path, tag_name)`
+- `remove_tag(file_path, tag_name)`
+- `get_tags_for_file(file_path)`
 
-Phase 2: Library Management & Filesystem Browsing
-Goal: Allow the user to select a directory as a "library" and display its contents.
+These commands interact with the SQLite database.
 
-Tauri Commands for Filesystem:
+### UI for Info Panel
 
-Create a Rust command to open the native "Open Folder" dialog.
+- When a file is selected, display details in the floating Info Panel:
+  - name
+  - path
+  - size
+  - file's tags (as pills)
+- Add UI element (input or dropdown) to add new tags.
 
-Create a Rust command that takes a path and returns a list of files and folders within it. This command should include basic metadata (name, path, is_dir, modified_date).
+### Background Syncing
 
-Frontend Integration:
+- On library load:
+  - Rust function to scan library and sync file list with database.
+  - Runs in a background thread.
+  - Uses Tauri events to notify the frontend of progress/completion.
 
-Add an "Open Library" button to the UI that invokes the "Open Folder" command.
+---
 
-Store the selected library path in React state.
+## Phase 4: Utility Implementation
 
-When a library is opened, call the command to list its contents and display them in the MainContent area as a simple list.
+**Goal:**  
+Build out core cleanup and extraction utilities.
 
-Database Setup (rusqlite):
+### Unzip Archives
 
-On opening a library, create or connect to a .3dpl.db file in the library's root.
+- Tauri command:
+  ```rust
+  unzip_archive(archive_path)
+  ```
+- Use the `zip` crate in Rust to handle extraction.
+- Extract "in-place", optionally delete source archive on success.
+- Provide feedback to UI via Tauri events (e.g., "Extraction complete", "Error: ..."), log to console.
 
-Define the initial database schema: a files table and a tags table.
+### Duplicate Folder Cleanup
 
-files table: id, path, name, file_type, size, modified_date, rating.
+- Command:
+  ```rust
+  cleanup_nested_folders(path)
+  ```
+- Recursive scanning logic in Rust to find `/Foo/Foo/` structures.
+- For MVP, performs the move. Preview/confirm step can be added later.
 
-tags table: id, name, color.
+---
 
-file_tags join table: file_id, tag_id.
+## Phase 5: Move by Tag
 
-Phase 3: File Tagging & Metadata
-Goal: Implement the core tagging functionality and display metadata in the info panel.
+**Goal:**  
+Implement the "Move to Tag Hub" feature.
 
-Tagging Commands (Rust):
+### Tag Hub Commands (Rust)
 
-add_tag(file_path, tag_name)
+- `set_folder_as_tag_hub(folder_path, tag_name)`
+- `get_hub_for_tag(tag_name)`
 
-remove_tag(file_path, tag_name)
+### Move Logic (Rust)
 
-get_tags_for_file(file_path)
+- Main command:
+  ```rust
+  move_to_tag_hub(file_path)
+  ```
+  - Get all tags for given file.
+  - Look up the hub folder for each tag.
+  - For MVP:
+    - If **exactly one** hub is found, move the file.
+    - If zero or multiple hubs found, log message to console.
 
-These commands will interact with the SQLite database.
+### Frontend Integration
 
-UI for Info Panel:
+- Add "Move to Tag Hub" button to context menu/toolbar, calling the new command.
 
-When a file is selected in the main view, its details (name, path, size) will be displayed in the floating Info Panel.
+---
 
-Fetch and display the file's tags as pills.
-
-Add a UI element (e.g., an input field or a dropdown) to add new tags to the selected file.
-
-Background Syncing:
-
-On library load, implement a Rust function to scan the library folder and sync its file list with the database. This should run in a background thread to avoid locking the UI. Use Tauri events to notify the frontend of progress and completion.
-
-Phase 4: Utility Implementation
-Goal: Build out the core cleanup and extraction utilities.
-
-Unzip Archives:
-
-Create a Tauri command unzip_archive(archive_path).
-
-Use the zip crate in Rust to handle extraction.
-
-Implement logic to extract "in-place" and optionally delete the source archive on success.
-
-Provide feedback to the UI via Tauri events (e.g., "Extraction complete," "Error: ..."), which can be logged to our new console.
-
-Duplicate Folder Cleanup:
-
-Create a command cleanup_nested_folders(path).
-
-Implement the recursive scanning logic in Rust to find .../Foo/Foo/ structures.
-
-For the MVP, this will just perform the move. The "preview/confirm" step can be added later.
-
-Phase 5: Move by Tag
-Goal: Implement the "Move to Tag Hub" feature.
-
-Tag Hub Commands (Rust):
-
-set_folder_as_tag_hub(folder_path, tag_name)
-
-get_hub_for_tag(tag_name)
-
-Move Logic (Rust):
-
-Create the main move_to_tag_hub(file_path) command.
-
-This command will:
-
-Get all tags for the given file.
-
-Look up the hub folder for each tag.
-
-For the MVP, if there is exactly one hub found, move the file. If zero or multiple, log a message to the console.
-
-Frontend Integration:
-
-Add a "Move to Tag Hub" button to the context menu/toolbar that calls the new command.
+Let me know if you want this split into tickets, need a Gantt chart, or want further task breakdowns!

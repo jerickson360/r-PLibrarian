@@ -9,6 +9,7 @@ export default {
     extend: {
       colors: {
         gray: {
+          950: '#0d1117', // <-- ADD THIS COLOR
           900: '#1a1d21', // Darkest background
           800: '#252a31', // Lighter background, panels
           700: '#3c424b', // Borders, dividers

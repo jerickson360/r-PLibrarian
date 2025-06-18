@@ -1,0 +1,29 @@
+[package]
+name = "r-p-librarian"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["You"]
+license = ""
+repository = ""
+edition = "2021"
+
+[lib]
+name = "r_p_librarian_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# Using your specified versions
+tauri = { version = "2", features = ["unstable"] }
+tauri-plugin-opener = "2"
+tauri-plugin-shell = { version = "2.2.1" }
+tauri-plugin-dialog = { version = "2.2.2" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+
+[features]
+# This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]
