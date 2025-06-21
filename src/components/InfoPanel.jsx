@@ -1,51 +1,60 @@
-import React from 'react';
-import { PanelRightOpen, PanelRightClose, Info, Folder, File as FileIcon } from 'lucide-react';
+// r-PLibrarian/src/components/InfoPanel.jsx
 
-function InfoPanel({ isOpen, setIsOpen, file }) {
+import React from 'react';
+import { Info } from 'lucide-react';
+
+const formatSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+function InfoPanel({ file }) {
+  // All fixed positioning and toggle logic is removed.
+  // This is now a simple component that fits inside a flex container.
   return (
-    <>
-      <div 
-        onClick={() => setIsOpen(!isOpen)}
-        className={`fixed top-1/2 -translate-y-1/2 z-20 bg-gray-700 hover:bg-accent-500 cursor-pointer p-2 rounded-l-lg transition-all duration-300 ${isOpen ? 'right-[384px]' : 'right-0'}`}
-      >
-        {isOpen ? <PanelRightClose size={20} /> : <PanelRightOpen size={20} />}
-      </div>
-      <aside 
-        className={`fixed top-0 bottom-0 z-10 w-96 bg-gray-800 shadow-lg transition-transform duration-300 ease-in-out transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
-        style={{ right: 0 }}
-      >
-        <div className="p-4 h-full flex flex-col">
-            <h2 className="text-lg font-bold mb-4 flex items-center">
-                <Info size={18} className="mr-2"/>
-                Information
-            </h2>
-            {file ? (
-                <div className="flex-grow space-y-3">
-                    <div className="flex items-center text-lg">
-                        {file.is_directory ? (
-                            <Folder size={20} className="mr-3 text-sky-400 flex-shrink-0"/>
-                        ) : (
-                            <FileIcon size={20} className="mr-3 text-gray-400 flex-shrink-0"/>
-                        )}
-                        <span className="font-bold truncate">{file.name}</span>
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-400">Path</p>
-                        <p className="text-sm font-mono bg-gray-900 p-2 rounded break-words">{file.path}</p>
-                    </div>
-                     <div>
-                        <p className="text-sm text-gray-400">Type</p>
-                        <p>{file.is_directory ? 'Folder' : 'File'}</p>
-                    </div>
-                </div>
-            ) : (
-                 <div className="flex-grow bg-gray-900 border-2 border-dashed border-gray-700 rounded-lg flex items-center justify-center">
-                    <p className="text-gray-600 text-center p-4">Select an item to see its metadata.</p>
-                </div>
-            )}
+    <aside className="w-80 bg-gray-850 p-4 border-l border-gray-700/50 flex-shrink-0 flex flex-col">
+      <h2 className="text-lg font-bold mb-4 flex items-center flex-shrink-0">
+        <Info size={18} className="mr-2" />
+        INFORMATION
+      </h2>
+      
+      {file ? (
+        <div className="flex-grow overflow-y-auto space-y-4 text-sm">
+          <div className="w-full h-52 bg-gray-700 rounded-lg flex items-center justify-center mb-6">
+            <p className="text-gray-500">THUMBNAIL 200x200PX</p>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <p className="text-xs text-gray-400 uppercase">SIZE:</p>
+              <p className="font-semibold">{file.is_directory ? '--' : formatSize(file.size)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 uppercase">FILE TYPE:</p>
+              <p className="font-semibold">{file.is_directory ? 'Folder' : 'File'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 uppercase">MODIFIED DATE:</p>
+              <p className="font-semibold">{new Date(file.modified).toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 uppercase">PATH:</p>
+              <p className="font-mono bg-gray-900 p-2 rounded break-words text-xs">{file.path}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 uppercase">TAGS:</p>
+            </div>
+          </div>
         </div>
-      </aside>
-    </>
+      ) : (
+        <div className="flex-grow flex items-center justify-center text-center text-gray-500">
+          <p>Select an item to view details</p>
+        </div>
+      )}
+    </aside>
   );
 }
 

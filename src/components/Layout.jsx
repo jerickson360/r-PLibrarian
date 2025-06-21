@@ -1,4 +1,4 @@
-// src/components/Layout.jsx
+// r-PLibrarian/src/components/Layout.jsx
 
 import React, { useState, useEffect } from 'react';
 import MenuBar from './MenuBar';
@@ -9,7 +9,6 @@ import { invoke } from '@tauri-apps/api/core';
 import { emit } from '@tauri-apps/api/event';
 
 function Layout() {
-  const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [history, setHistory] = useState([]);
   const [currentPath, setCurrentPath] = useState(null);
   const [files, setFiles] = useState([]);
@@ -20,6 +19,7 @@ function Layout() {
     if (path && path !== currentPath) {
       setHistory(prev => [...prev, currentPath]);
       setCurrentPath(path);
+      setSelectedFile(null);
     }
   };
 
@@ -28,6 +28,7 @@ function Layout() {
       const lastPath = history[history.length - 1];
       setHistory(prev => prev.slice(0, -1));
       setCurrentPath(lastPath);
+      setSelectedFile(null);
     }
   };
 
@@ -53,16 +54,21 @@ function Layout() {
   }, [currentPath]);
 
   return (
-    <div className="flex flex-col h-screen bg-gray-950 text-gray-200">
+    // The main container is a vertical flex column (MenuBar on top, content below)
+    <div className="flex flex-col h-screen font-sans text-gray-200 bg-gray-900">
       <MenuBar
         setLibraryPath={setCurrentPath}
         setHistory={setHistory}
         onNavigateBack={navigateBack}
         canNavigateBack={history.length > 0}
       />
-      {/* The key change is here: InfoPanel is no longer inside the main flex container */}
-      <div className="flex flex-grow overflow-hidden">
-        <Sidebar libraryPath={currentPath} files={files} onFolderClick={navigateTo} />
+      {/* This container is a HORIZONTAL flex row for the 3 columns */}
+      <div className="flex flex-1 overflow-y-hidden">
+        <Sidebar
+          libraryPath={currentPath}
+          files={files}
+          onFolderClick={navigateTo}
+        />
         <MainContent
           files={files}
           error={error}
@@ -70,13 +76,10 @@ function Layout() {
           onFolderDoubleClick={navigateTo}
           selectedFile={selectedFile}
         />
+        <InfoPanel
+          file={selectedFile}
+        />
       </div>
-      {/* InfoPanel is now a sibling to the main content area, allowing it to float over it */}
-      <InfoPanel
-        isOpen={isPanelOpen}
-        setIsOpen={setIsPanelOpen}
-        file={selectedFile}
-      />
     </div>
   );
 }
